@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Course with Modules</title>
+
+    <!-- Embedded CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+            margin-top: 60px; /* Added margin-top to avoid text hiding behind the header */
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 0; /* Removed top margin from h2 to prevent overlapping */
+        }
+
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+            form div {
+                margin-bottom: 15px;
+            }
+
+            form label {
+                font-weight: bold;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            form input {
+                width: 100%;
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+            }
+
+            form button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 15px;
+                border: none;
+                cursor: pointer;
+                border-radius: 4px;
+            }
+
+                form button:hover {
+                    background-color: #45a049;
+                }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+            table th, table td {
+                padding: 10px;
+                text-align: left;
+                border: 1px solid #ddd;
+            }
+
+        button[type="button"] {
+            background-color: #f44336;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+            button[type="button"]:hover {
+                background-color: #e53935;
+            }
+
+        /* Added margin to create space between Add Module and Create buttons */
+        .button-container {
+            margin-top: 20px;
+        }
+    </style>
+
+    <!-- Include AngularJS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+</head>
+<body>
+
+    <div ng-app="courseApp" ng-controller="CourseController">
+        <h2>Create Course with Modules</h2>
+        <form ng-submit="submitCourseForm()">
+            <div>
+                <label for="title">Course Title</label>
+                <input type="text" id="title" ng-model="course.Title" required>
+            </div>
+            <div>
+                <label for="duration">Duration</label>
+                <input type="text" id="duration" ng-model="course.Duration" required>
+            </div>
+            <div>
+                <label for="fees">Fees</label>
+                <input type="number" id="fees" ng-model="course.Fees" required>
+            </div>
+
+            <h4>Modules</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Contents</th>
+                        <th>Duration</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="module in course.Modules">
+                        <td><input type="text" ng-model="module.Title" required></td>
+                        <td><input type="text" ng-model="module.Contents" required></td>
+                        <td><input type="number" ng-model="module.Duration" required></td>
+                        <td><button type="button" ng-click="removeModule($index)">Remove</button></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="button-container">
+                <button type="button" ng-click="addModule()">Add Module</button>
+            </div>
+
+            <div class="button-container">
+                <button type="submit">Create</button>
+            </div>
+        </form>
+
+        <h2>Existing Courses</h2>
+        <ul>
+            <li ng-repeat="course in courses">
+                {{ course.Title }} - {{ course.Duration }} - {{ course.Fees }}
+            </li>
+        </ul>
+    </div>
+
+    <script>
+    var app = angular.module('courseApp', []);
+
+    app.controller('CourseController', function($scope, $http) {
+        // Default course object
+        $scope.course = {
+            Title: '',
+            Duration: '',
+            Fees: 0,
+            Modules: [{ Title: '', Contents: '', Duration: 0 }] // Default empty module
+        };
+
+        // Fetch existing courses
+        $http.get('@Url.Action("GetCourses", "CourseModule")').then(function(response) {
+            $scope.courses = response.data;
+        });
+
+        // Add a new module
+        $scope.addModule = function() {
+            $scope.course.Modules.push({ Title: '', Contents: '', Duration: 0 });
+        };
+
+        // Remove a module
+        $scope.removeModule = function(index) {
+            $scope.course.Modules.splice(index, 1);
+        };
+
+        // Submit the form and create a course
+        $scope.submitCourseForm = function() {
+            var apiUrl = '@Url.Action("CreateCourse", "CourseModule")';
+            $http.post(apiUrl, $scope.course).then(function(response) {
+                if (response.data.success) {
+                    alert('Course created successfully!');
+                    // Redirect to GetCourses view
+                    window.location.href = '/CourseModule/GetCourses';
+                    // Optionally reload the course list after successful creation
+                    $http.get('@Url.Action("GetCourses", "CourseModule")').then(function(response) {
+                        $scope.courses = response.data;
+                    });
+                } else {
+                    alert('Error: ' + response.data.message);
+                }
+            });
+        };
+    });
+    </script>
+
+</body>
+</html>

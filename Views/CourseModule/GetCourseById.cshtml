@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html lang="en" ng-app="courseApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Details</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script>
+        // AngularJS application and controller
+        angular.module('courseApp', [])
+            .controller('CourseController', ['$scope', '$http', function ($scope, $http) {
+                // Extract the courseId from the URL
+                var courseId = window.location.pathname.split('/').pop(); // Get course ID from URL
+
+                // Function to fetch course details by ID
+                $scope.getCourseDetails = function () {
+                    // Directly include the courseId in the URL
+                    $http.get('/CourseModule/GetCourseByIdd/' + courseId)  // Using the ID directly in the URL
+                        .then(function (response) {
+                            if (response.data.success) {
+                                $scope.course = response.data.data; // Store the course data in $scope
+                            } else {
+                                alert(response.data.message); // Display error message
+                            }
+                        }, function (error) {
+                            alert("Error: " + error.statusText); // Handle error
+                        });
+                };
+
+                // Call getCourseDetails when the controller is initialized
+                $scope.getCourseDetails();
+            }]);
+    </script>
+</head>
+<body ng-controller="CourseController">
+
+    <!-- Course Details Section -->
+    <div class="container" ng-if="course">
+        <h1>{{ course.Title }}</h1>
+        <p><strong>Duration:</strong> {{ course.Duration }} hours</p>
+        <p><strong>Fees:</strong> ${{ course.Fees }}</p>
+
+        <h3>Modules:</h3>
+        <ul>
+            <li ng-repeat="module in course.Modules">
+                <h4>{{ module.Title }}</h4>
+                <p><strong>Contents:</strong> {{ module.Contents }}</p>
+                <p><strong>Duration:</strong> {{ module.Duration }} hours</p>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Loading Message -->
+    <div ng-if="!course">
+        <p>Loading course details...</p>
+    </div>
+
+</body>
+</html>

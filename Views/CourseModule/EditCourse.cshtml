@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+<html lang="en" ng-app="courseApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Course</title>
+    <script src="https://code.angularjs.org/1.8.2/angular.min.js"></script>
+</head>
+<body ng-controller="CourseController">
+
+    <h2>Edit Course</h2>
+
+    <form ng-submit="saveCourse()">
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" ng-model="course.Title" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="duration">Duration:</label>
+            <input type="text" id="duration" ng-model="course.Duration" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label for="fees">Fees:</label>
+            <input type="number" id="fees" ng-model="course.Fees" class="form-control" required />
+        </div>
+
+        <h3>Modules</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Contents</th>
+                    <th>Duration</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="module in course.Modules">
+                    <td><input type="text" ng-model="module.Title" class="form-control" required /></td>
+                    <td><input type="text" ng-model="module.Contents" class="form-control" required /></td>
+                    <td><input type="text" ng-model="module.Duration" class="form-control" required /></td>
+                    <td><button type="button" class="btn btn-danger" ng-click="removeModule($index)">Remove</button></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button type="button" class="btn btn-success" ng-click="addModule()">Add Module</button>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </form>
+
+    <script>
+        var app = angular.module('courseApp', []);
+
+        app.controller('CourseController', function ($scope, $http) {
+            // Get the course ID from the URL (you can also use route params if using routing)
+            var courseId = window.location.pathname.split('/').pop(); // Extract course ID from URL
+            console.log('Course ID:', courseId);
+            // Initialize the course model
+            $scope.course = {
+                Title: '',
+                Duration: '',
+                Fees: '',
+                Modules: []
+            };
+
+            // Fetch course data by ID
+            $http.get('/CourseModule/GetCourseByIdd/' + courseId)
+                .then(function (response) {
+                    if (response.data.success) {
+                        $scope.course = response.data.data;
+                    } else {
+                        alert(response.data.message);
+                    }
+                }, function (error) {
+                    alert('Error fetching course data');
+                });
+
+            // Add a new module
+            $scope.addModule = function () {
+                $scope.course.Modules.push({
+                    Title: '',
+                    Contents: '',
+                    Duration: ''
+                });
+            };
+
+            // Remove a module
+            $scope.removeModule = function (index) {
+                $scope.course.Modules.splice(index, 1);
+            };
+
+            // Save the course data (POST request)
+            $scope.saveCourse = function () {
+                // Prepare the data to send (including the course ID in the payload, if required)
+                var payload = angular.copy($scope.course);
+                payload.ID = courseId; // If the ID is required in the server-side model
+
+                // Send POST request to update the course
+                $http.post('/CourseModule/EditCourses/' + courseId, payload)
+                    .then(function (response) {
+                        if (response.data.success) {
+                            alert('Course updated successfully');
+                            // Redirect to GetCourses view
+                            window.location.href = '/CourseModule/GetCourses';
+                        } else {
+                            alert('Error updating course: ' + response.data.message);
+                        }
+                    }, function (error) {
+                        alert('Error updating course. Please try again.');
+                        console.error(error);
+                    });
+            };
+        });
+    </script>
+
+</body>
+</html>
+

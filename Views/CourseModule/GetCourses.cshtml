@@ -1,0 +1,229 @@
+﻿@{
+    ViewBag.Title = "Courses";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title</title>
+    <style>
+        /* General body and font styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h3 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        thead {
+            background-color: #5cb85c;
+            color: #fff;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        th {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        /* Button Styling */
+        .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #fff;
+            background-color: #5cb85c;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            margin: 5px;
+        }
+
+            .btn:hover {
+                background-color: #4cae4c;
+            }
+
+        /* Modules List Styling */
+        ul {
+            padding-left: 20px;
+            list-style-type: none;
+        }
+
+            ul li {
+                margin-bottom: 5px;
+                font-size: 14px;
+                color: #555;
+            }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div ng-app="courseApp" ng-controller="CourseController" class="container">
+        <h3>All Courses</h3>
+        <button class="btn" ng-click="CreateCourse()">CreateCourse</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Duration</th>
+                    <th>Fees</th>
+                    <th>Modules</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="course in courses">
+                    <td>{{ course.Title }}</td>
+                    <td>{{ course.Duration }}</td>
+                    <td>{{ course.Fees | currency }}</td>
+                    <td>
+                        <ul>
+                            <li ng-repeat="module in course.Modules">
+                                {{ module.Title }} ({{ module.Contents }})
+                            </li>
+                        </ul>
+                    </td>
+                    <td>
+                        <!-- Edit, Delete, and Details buttons -->
+                        <button class="btn" ng-click="editCourse(course.ID)">Edit</button>
+                        <button class="btn" ng-click="deleteCourse(course.ID)">Delete</button>
+                        <button class="btn" ng-click="viewDetails(course.ID)">Details</button>
+                       
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Include AngularJS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script>
+        var app = angular.module('courseApp', []);
+
+        app.controller('CourseController', function($scope, $http, $location) {
+            // Fetch courses from the server
+            $http.get('@Url.Action("GetCoursess", "CourseModule")').then(function(response) {
+                $scope.courses = response.data;
+            }, function(error) {
+                alert("Error fetching courses.");
+            });
+
+            // Edit course function (example)
+            $scope.editCourse = function(courseID) {
+                alert("Editing course with ID: " + courseID);
+                // Redirect to GetCourses view
+                window.location.href = '/CourseModule/EditCourse/' + courseID;
+
+
+               // window.location.href = '/CourseModule/EditCourse?courseId=' + courseID;
+
+            };
+
+            // Delete course function (example)
+            $scope.deleteCourses = function(courseID) {
+                var confirmation = confirm("Are you sure you want to delete this course?");
+                if (confirmation) {
+                    alert("Deleting course with ID: " + courseID);
+                    // Call API to delete course here
+                }
+            };
+
+            // Delete course function with API call
+            $scope.deleteCourse = function (courseID) {
+                var confirmation = confirm("Are you sure you want to delete this course?");
+                if (confirmation) {
+                    // Construct the API URL with parameters for logging
+                    var apiEndpoint = '/CourseModule/DeleteCourses?id=' + courseID;
+
+                    // Log the endpoint and ID being used
+                    console.log("Attempting to call endpoint:", apiEndpoint);
+                    console.log("Course ID:", courseID);
+
+                    // Make the API call to delete the course
+                    $http({
+                        method: 'POST',
+                        url: '/CourseModule/DeleteCourses', // API endpoint
+                        params: { id: courseID }  // Send 'id' as query parameter
+                    })
+                        .then(function (response) {
+                            if (response.data.success) {
+                                alert("Course deleted successfully!");
+                                // Refresh the current page
+                                location.reload();
+                                // Optionally, you can refresh the course list or update the UI
+                            } else {
+                                alert("Failed to delete course: " + response.data.message);
+                            }
+                        })
+                        .catch(function (error) {
+                            // Log the error and additional details for debugging
+                            console.error("Error deleting course:");
+                            console.error("API Endpoint:", apiEndpoint);
+                            console.error("Course ID:", courseID);
+                            console.error("Error Details:", error);
+
+                            alert("Failed to delete course. Check console for more details.");
+                        });
+                }
+            };
+
+            // View details function (example)
+            $scope.viewDetails = function(courseID) {
+                alert("Viewing details for course ID: " + courseID);
+                window.location.href = '/CourseModule/GetCourseById/' + courseID;
+                // Redirect to details page or show modal
+            };
+
+            // create course function (example)
+            $scope.CreateCourse = function () {
+                alert("Start Create the course");
+                window.location.href = '/CourseModule/Create';
+                // Redirect to details page or show modal
+            };
+        });
+    </script>
+</body>
+</html>
